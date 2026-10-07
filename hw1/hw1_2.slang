@@ -47,17 +47,15 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                 // Find the closest point on the line segment
                 float t = dot(AP, AB) / denom;
 
-                // Keep t between 0 and 1 so the closest point
-                // stays on the segment rather than the infinite line
-                t = clamp(t, 0.0, 1.0);
+                // Count pixels that have closest point lies on the segment
+                if (t >= 0.0 && t <= 1.0) {
+                    float2 closest = A + t * AB;
+                    float distance = length(p - closest);
 
-                float2 closest = A + t * AB;
-
-                float distance = length(p - closest);
-
-                // Stroke extends half the stroke width on each side
-                if (distance <= stroke_width * 0.5) {
-                    in_stroke = true;
+                    // Stroke extends half the stroke width on each side
+                    if (distance <= stroke_width * 0.5) {
+                        in_stroke = true;
+                    }
                 }
             }
         }
@@ -78,14 +76,15 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
             if (denom > 0.0) {
 
                 float t = dot(AP, AB) / denom;
-                t = clamp(t, 0.0, 1.0);
 
-                float2 closest = A + t * AB;
+                if (t >= 0.0 && t <= 1.0) {
+                    float2 closest = A + t * AB;
 
-                float distance = length(p - closest);
+                    float distance = length(p - closest);
 
-                if (distance <= stroke_width * 0.5) {
-                    in_stroke = true;
+                    if (distance <= stroke_width * 0.5) {
+                        in_stroke = true;
+                    }
                 }
             }
         }
