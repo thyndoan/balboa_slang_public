@@ -9,6 +9,7 @@ CIRCLE = 0
 POLYLINE = 1
 QUADRATIC_BEZIER = 2
 
+
 class Scene:
     """
         A Scene contains the following:
@@ -49,6 +50,7 @@ class Scene:
         Transformation: {'time': float,
                          'transform': [{'scale'|'translate'|'rotate'|'shear_x'|'shear_y': transformation values}]}
     """
+
     def __init__(self,
                  resolution,
                  background,
@@ -83,6 +85,8 @@ class Scene:
         )
 
 # helper function
+
+
 def add_curves(obj, new_points, closed,
                points, shape_type, curves, shapes):
     # sometimes new_points might be [[1.0, 2.0], [3.0, 4.0], ...]
@@ -109,10 +113,11 @@ def add_curves(obj, new_points, closed,
         'stroke_width': obj.get('stroke_width', 1.0),
     })
 
-def parse_scene(filename : str) -> Scene:
+
+def parse_scene(filename: str) -> Scene:
     with open(filename, 'r') as f:
         scene = json.load(f)
-        
+
         resolution = scene['resolution']
         background = scene['background']
         duration = scene['duration'] if 'duration' in scene else 1.0
@@ -182,24 +187,106 @@ def parse_scene(filename : str) -> Scene:
                  quadratic_beziers,
                  points)
 
+
 def compose_transformation(transforms):
     """
-        Given a list of transformations, compose them into a matrix.
+        Given a list of transformations, compose them into a 3x3 matrix.
+
+        The transformations are applied in the order they appear
+        in the scene file.
+
+        For example:
+
+            [
+                {"scale": [200, 100]},
+                {"rotate": [45]},
+                {"translate": [320, 180]}
+            ]
+
+        means:
+
+            scale -> rotate -> translate
+
+        Therefore the final matrix is:
+
+            F = T * R * S
     """
 
+    # Start with the identity matrix.
+    # This means that, before any transformations,
+    # the object stays exactly where it is.
     F = np.eye(3, dtype=np.float32)
 
     for transform in transforms:
-        pass
-        # TODO: your code here
+
+        # Each transform dictionary has one key,
+        # such as "scale", "rotate", or "translate".
+        name = list(transform.keys())[0]
+        values = transform[name]
+        if name == "scale":
+
+            sx = values[0]
+            sy = values[1]
+
+            M = np.array([
+                [sx, 0.0, 0.0],
+                [0.0, sy, 0.0],
+                [0.0, 0.0, 1.0]
+            ], dtype=np.float32)
+        elif name == "shear_x":
+
+            k = values[0]
+
+            M = np.array([
+                [1.0, k,   0.0],
+                [0.0, 1.0, 0.0],
+                [0.0, 0.0, 1.0]
+            ], dtype=np.float32)
+        elif name == "shear_y":
+
+            k = values[0]
+
+            M = np.array([
+                [1.0, 0.0, 0.0],
+                [k,   1.0, 0.0],
+                [0.0, 0.0, 1.0]
+            ], dtype=np.float32)
+        elif name == "rotate":
+
+            angle = math.radians(values[0])
+
+            c = math.cos(angle)
+            s = math.sin(angle)
+
+            M = np.array([
+                [c, -s, 0.0],
+                [s,  c, 0.0],
+                [0.0, 0.0, 1.0]
+            ], dtype=np.float32)
+        elif name == "translate":
+
+            tx = values[0]
+            ty = values[1]
+
+            M = np.array([
+                [1.0, 0.0, tx],
+                [0.0, 1.0, ty],
+                [0.0, 0.0, 1.0]
+            ], dtype=np.float32)
+        else:
+            raise ValueError("Unknown transformation: " + name)
+
+        F = M @ F
 
     return F
+
 
 def interpolate_transformation(transform_keyframes, t):
     # TODO: your code here
 
     # Should never happen?
     assert False
+
 
 def upload_scene(scene, module, slang_device, t=0.0):
     # Keyframe parameters are interpolated on the CPU;
@@ -220,7 +307,8 @@ def upload_scene(scene, module, slang_device, t=0.0):
             obj_to_world = compose_transformation(shape['transform'])
             new_shape['world_to_obj'] = np.linalg.inv(obj_to_world)
         if 'transform_keyframes' in shape:
-            transforms = interpolate_transformation(shape['transform_keyframes'], t)
+            transforms = interpolate_transformation(
+                shape['transform_keyframes'], t)
             obj_to_world = compose_transformation(transforms)
             new_shape['world_to_obj'] = np.linalg.inv(obj_to_world)
         shapes.append(new_shape)
