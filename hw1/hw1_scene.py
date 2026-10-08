@@ -288,10 +288,11 @@ def interpolate_transformation(transform_keyframes, t):
     if n == 0:
         return []
 
-    # clamp t to the range of keyframe times
+    # Before the first keyframe, return the first keyframe's transformation
     if t <= transform_keyframes[0]['time']:
         return transform_keyframes[0]['transform']
 
+    # After the last keyframe, return the last keyframe's transformation
     if t >= transform_keyframes[-1]['time']:
         return transform_keyframes[-1]['transform']
 

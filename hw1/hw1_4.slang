@@ -19,6 +19,8 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
     }
 
     image[tid] = float4(background, 1.0);
+        
+    // TODO: your code here
     float2 p = float2(
         tid.x + 0.5,
         height - (tid.y + 0.5)
@@ -35,6 +37,7 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
 
         float2 object_p = object_point.xy;
 
+        // Circle portion
         if (shape.type == ShapeType.Circle) {
 
             Circle circle = circles[shape.index];
@@ -51,6 +54,7 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
             }
         }
 
+        // Polyline portion
         else if (shape.type == ShapeType.Polyline) {
 
             Polyline polyline = polylines[shape.index];
@@ -58,6 +62,7 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
             bool in_fill = false;
             bool in_stroke = false;
 
+            // Fill
             if (shape.use_fill && polyline.closed) {
 
                 int winding = 0;
@@ -103,6 +108,7 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                 }
             }
 
+            // Stroke
             if (shape.use_stroke) {
 
                 float half_width = shape.stroke_width * 0.5;
@@ -134,6 +140,7 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                     }
                 }
 
+                // Closing segment, connect last point to first point if polyline is closed
                 if (polyline.closed &&
                     polyline.pts_end - polyline.pts_begin > 1) {
 
@@ -160,6 +167,7 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                     }
                 }
 
+                // Check vertices for round joins
                 for (int i = polyline.pts_begin + 1;
                      i < polyline.pts_end - 1;
                      i++) {
@@ -171,6 +179,7 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                     }
                 }
 
+                // round joins when the polyline is closed
                 if (polyline.closed &&
                     polyline.pts_end - polyline.pts_begin > 1) {
 
@@ -187,6 +196,7 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                 }
             }
 
+            // Painting 
             if (in_fill) {
                 image[tid] = shape.fill_rgba;
             }
