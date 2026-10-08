@@ -115,12 +115,12 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                     float2 ab = b - a;
                     float t = dot(p - a, ab) / dot(ab, ab);
 
-                    t = clamp(t, 0.0, 1.0);
+                    if (t >= 0.0 && t <= 1.0) {
+                        float2 closest = a + t * ab;
 
-                    float2 closest = a + t * ab;
-
-                    if (length(p - closest) <= r) {
-                        hit = true;
+                        if (length(p - closest) <= r) {
+                            hit = true;
+                        }
                     }
                 }
 
@@ -133,12 +133,12 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                     float2 ab = b - a;
                     float t = dot(p - a, ab) / dot(ab, ab);
 
-                    t = clamp(t, 0.0, 1.0);
+                    if (t >= 0.0 && t <= 1.0) {
+                        float2 closest = a + t * ab;
 
-                    float2 closest = a + t * ab;
-
-                    if (length(p - closest) <= r) {
-                        hit = true;
+                        if (length(p - closest) <= r) {
+                            hit = true;
+                        }   
                     }
                 }
 

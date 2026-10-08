@@ -283,9 +283,66 @@ def compose_transformation(transforms):
 
 def interpolate_transformation(transform_keyframes, t):
     # TODO: your code here
+    n = len(transform_keyframes)
 
-    # Should never happen?
-    assert False
+    if n == 0:
+        return []
+
+    # clamp t to the range of keyframe times
+    if t <= transform_keyframes[0]['time']:
+        return transform_keyframes[0]['transform']
+
+    if t >= transform_keyframes[-1]['time']:
+        return transform_keyframes[-1]['transform']
+
+    # find the two keyframes that t is between
+    for i in range(n - 1):
+
+        # get the two keyframes
+        k0 = transform_keyframes[i]
+        k1 = transform_keyframes[i + 1]
+
+        # get the times of the two keyframes
+        t0 = k0['time']
+        t1 = k1['time']
+
+        # interpolate the transformation between the two keyframes
+        if t0 <= t <= t1:
+
+            w = (t - t0) / (t1 - t0)
+            result = []
+
+            # get the transformations of the two keyframes
+            transform0 = k0['transform']
+            transform1 = k1['transform']
+
+            # interpolate each transformation in the two keyframes
+            for j in range(len(transform0)):
+
+                # get the transformation (scale, translate,etc.)
+                tr0 = transform0[j]
+                tr1 = transform1[j]
+
+                # get the key of the transformation (scale, translate,etc.)
+                name = list(tr0.keys())[0]
+
+                # get the value of each key 
+                vals0 = tr0[name]
+                vals1 = tr1[name]
+
+                interp_vals = []
+
+                # calculate the interpolated values for each key
+                for k in range(len(vals0)):
+                    interp_vals.append((1 - w) * vals0[k] + w * vals1[k])
+
+                result.append({
+                    name: interp_vals
+                })
+            return result
+
+    # Should never happen? 
+    assert False, "Failed to find keyframe interval"
 
 
 def upload_scene(scene, module, slang_device, t=0.0):
