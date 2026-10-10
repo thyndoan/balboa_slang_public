@@ -18,8 +18,6 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
         return;
     }
 
-    // TODO: your code here
-
     //Change to accumulated color to sample 
     float3 accumulated_color = float3(0.0);
                        

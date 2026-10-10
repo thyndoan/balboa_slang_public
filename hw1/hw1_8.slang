@@ -18,8 +18,6 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
         return;
     }
 
-    // TODO: your code here
-
     //Change to accumulated color to sample 
     float3 accumulated_color = float3(0.0);
                        
@@ -233,9 +231,142 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                     bool in_stroke = false;
 
                     //Fill 
+                    if (shape.use_fill && curve.closed) {
+
+                        int winding = 0;
+
+                        // Walk through all the quadratic bezier segments
+                        for (int i = curve.pts_begin; i < curve.pts_end; i += 2){
+                            float2 p0 = points[i];
+                            float2 p1 = points[i + 1];
+
+                            int i2 = (i + 2);
+                            if (i2 >= curve.pts_end) {
+                                i2 = curve.pts_begin;
+                            }
+                            float2 p2 = points[i2]; // wrap around to the first point if closed
+
+                            // Solve the quadratic equation where q_y(t) = object_p.y
+                            float a = p0.y - 2 * p1.y + p2.y;
+                            float b = 2 * (p1.y - p0.y);
+                            float c = p0.y - object_p.y;
+
+                            // roots returned by the quadratic solver
+                            float2 roots;
+
+                            // if we find the roots, we check if they are in range [0,1]
+                            if (solve_quadratic(a, b, c, roots)) {
+                                for (int j = 0; j < 2; j++) {
+                                    
+                                    // skip duplicate root
+                                    if (j == 0 && roots.x == roots.y) {
+                                        continue; 
+                                    }
+
+                                    // check both roots values
+                                    float t = (j == 0) ? roots.x : roots.y;
+
+                                    //if the root is not in the range [0,1], we skip it
+                                    if (t < 0.0 || t > 1.0) {
+                                        continue;
+                                    }
+
+                                    // calculate the curve at t value to get the intersection point
+                                    float2 q = (1 - t) * (1 - t) * p0 + 2 * (1 - t) * t * p1 + t * t * p2;
+                                    
+                                    // only check the intersection if it's on the right side of the point
+                                    if (q.x > object_p.x) {
+                                        // calculate the derivative of the bezier curve at t to determine the direction of the curve
+                                        float dy = 2*(1 - t) * (p1.y - p0.y) + 2 * t * (p2.y - p1.y);
+
+                                        // upward crossing
+                                        if (dy > 0) {
+                                            winding++;
+                                        }
+                                        //downward crossing 
+                                        else if (dy < 0) {
+                                            winding--;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (winding != 0) {
+                            in_fill = true;
+                        } 
+                    }
 
                     //Stroke
+                    if (shape.use_stroke) {
+                        float half_width = shape.stroke_width * 0.5;
 
+                        // Number of curve pieces: an open path with n points has (n - 1) / 2,
+                        // and a closed path has n / 2 
+
+                        int n = curve.pts_end - curve.pts_begin;
+                        int num_pieces = curve.closed ? n / 2 : (n - 1) / 2;
+                        
+                        // Walk through all the quadratic bezier segments
+                        for (int k = 0; k < num_pieces; k++) {
+
+                            int i = curve.pts_begin + 2 * k;
+
+                            // The third point wraps to the first point at the end of a closed path
+                            int i2 = i + 2;
+                            if (i2 >= curve.pts_end) {
+                                i2 = curve.pts_begin;
+                            }
+
+                            float2 p0 = points[i];
+                            float2 p1 = points[i + 1];
+                            float2 p2 = points[i2];
+
+                            // q(t) = A t^2 + B t + C
+                            float2 A = p0 - 2.0 * p1 + p2;
+                            float2 B = 2.0 * (p1 - p0);
+                            float2 C = p0;
+                            float2 D = C - object_p;   
+                            
+                            // the coefficients of (q(t) - object_p) * q'(t) = 0, the closest point on the curve to the object point
+                            float c3 = 2 * dot(A, A);
+                            float c2 = 3 * dot(A, B);
+                            float c1 = dot(B, B) + 2 * dot(A, D);
+                            float c0 = dot(B, D);
+
+                            float3 roots;
+                            int count = solve_cubic(c3, c2, c1, c0, roots);
+
+                            for (int r = 0; r < count; r++) {
+
+                                float t = roots[r];
+
+                                // skip t unless it is in [0, 1]
+                                if (t < 0.0 || t > 1.0) {
+                                    continue;
+                                }
+
+                                // Calculate the point on the curve at t
+                                float2 q = A * t * t + B * t + C;
+
+                                // if the distance from object_p to q is at most half_width,
+                                // the sample is in the stroke
+                                if (length(object_p - q) <= half_width) {
+                                    in_stroke = true;
+                                }
+                            }
+                        }
+                        // Round joins
+                        for (int i = 0; i < num_pieces; i++) {
+                            //leave the free end flat
+                            if (!curve.closed && i == 0) {
+                                continue;
+                            }
+                            float2 joint = points[curve.pts_begin + 2 * i];
+                            if (length(object_p - joint) <= half_width) {
+                                in_stroke = true;
+                            }
+                        }
+                    }
                     //Blend the fill and stroke colors with the sample color
                     // Calculate the sample color based on fill and stroke
                     if (in_fill) {
