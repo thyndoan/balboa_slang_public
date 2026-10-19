@@ -15,6 +15,13 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
     }
 
     // TODO: HW 2.1
+    // center of a pixel
+    float2 p = float2(ipixel) + float2(0.5, 0.5);
 
+    // Aspect ratio
+    float1 a = width/height
+
+    // Scale factor from -s
+    float
     image[ipixel] = float4(float3(0.0), 1.0);
 }

@@ -19,16 +19,31 @@ def hw2_1(args):
     a = img.width / img.height
     def to_screen(p):
         # HW2.1: implement this
+        x, y, z = p
+
+        # perspective projection (turning 3d into 2d)
+        xp = -x / z
+        yp = -y / z
+        
         # access "s" using args.s
-        return (0.0, 0.0)
+        # screen mapping
+        sx = img.width * ((xp + args.s * a) / (2 * args.s * a))
+        sy = img.height * ((args.s - yp) / (2 * args.s))
+        return (sx, sy)
 
     sp0 = to_screen(args.p0)
     sp1 = to_screen(args.p1)
     sp2 = to_screen(args.p2)
 
     # HW2.1: implement this
-    aabb_min = (0, 0)
-    aabb_max = (10, 10)
+    # store all the x of the 3 projected vertices in xs
+    # and all the y in ys
+    xs = [sp0[0], sp1[0], sp2[0]]
+    ys = [sp0[1], sp1[1], sp2[1]]
+
+    ## aabb = smallest rectangle contains all 3 projected vertices
+    aabb_min = (math.floor(min(xs)), math.floor(min(ys)))
+    aabb_max = (math.ceil(max(xs)), math.ceil(max(ys)))
 
     vars = {'sp0': sp0,
             'sp1': sp1,
