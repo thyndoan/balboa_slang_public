@@ -205,12 +205,27 @@ def hw2_3(args):
     a = width / height
 
     # HW 2.3: implement this
-    # change np.zeros into the right matrices
-    projection = np.zeros((4, 4), dtype=np.float32)
-    camera_to_screen = np.zeros((4, 4), dtype=np.float32)
+    # Perspective projection in homogeneous coordinates, use eq.29
+    projection = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 0, 1],
+        [0, 0, -1, 0]
+    ], dtype=np.float32)
+
+    # camera space to screen space, similar to part 2, just write in matrix
+    camera_to_screen = np.array([
+        [width/2*camera.s*a, 0, 0, width/2],
+        [0, -height/(2*camera.s), 0, height/2],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+    ], dtype=np.float32)
+
     # use camera.cam_to_world
-    view_matrix = np.zeros((4, 4), dtype=np.float32)
-    world_to_screen = np.zeros((4, 4), dtype=np.float32)
+    # view matrix is inverse of cam to world
+    view_matrix = np.linalg.inv(camera.cam_to_world)
+
+    world_to_screen = (camera_to_screen @ projection @ view_matrix)
     
     screen_vertices_list = []
     inv_depth_list = []
