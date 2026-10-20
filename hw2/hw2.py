@@ -215,7 +215,7 @@ def hw2_3(args):
 
     # camera space to screen space, similar to part 2, just write in matrix
     camera_to_screen = np.array([
-        [width/2*camera.s*a, 0, 0, width/2],
+        [width/(2*camera.s*a), 0, 0, width/2],
         [0, -height/(2*camera.s), 0, height/2],
         [0, 0, 1, 0],
         [0, 0, 0, 1]
@@ -240,13 +240,23 @@ def hw2_3(args):
             [mesh.vertices, ones],
             axis=1
         )
+
         # transform vertices using MVP & homogeneous coordinates division
+        vertices = vertices @ MVP.T
+
         # The resulting vertices should contain
         # (screen_x, screen_y, inverse_depth).
+        # eq 28, I used AI to help me explain this eq in code because I wasn't sure how to write it
+        # after it explained the format, I could be able to write this and eq 30
+        vertices[:, 0] /= vertices[:, 3]
+        vertices[:, 1] /= vertices[:, 3]
+        vertices[:, 2] /= vertices[:, 3]
+
         # inverse_depth should be positive
-        # ---
-        # HW 2.3: your code here
-        # ---
+        # z after projection in inverse depth, use eq30
+
+        vertices[:, 2] = np.abs(vertices[:, 2])
+
         inv_depth_list.append(np.ascontiguousarray(vertices[:, 2]))
         screen_vertices_list.append(np.ascontiguousarray(vertices[:, :2]))
 
@@ -342,21 +352,34 @@ def hw2_3(args):
 
 def interpolate_transformation(transform_keyframes, t):
     # HW 2.4: implement this
-    # Find the two keyframes surrounding t and linearly
     # interpolate the corresponding transformation parameters.
     #
     # Return a list of transformations in the same format
     # as the "transform" field in the scene JSON.
+    
+    # this is for part 4
+    # if len(transform_keyframes) == 0:
+    #     return[]
+    
+    # # Find the two keyframes surrounding t and linearly
+    # for i in range(len(transform_keyframes) - 1):
+    #     kf0 = transform_keyframes[i]
+    #     kf1 = transform_keyframes[i+1]
 
-    #for scaling, eq.18
-    if "scale" in transform:
-        sx, sy, sz = transform["scale"]
-        M = np.array([
-            [sx, 0, 0, 0],
-            [0, sy, 0, 0],
-            [0, 0, sz, 0],
-            [0, 0, 0, 1]
-        ], dtype=np.float32)
+    #     t0 = kf0["time"]
+    #     t1 = kf1["time"]
+
+    #     if t0 <= t <= 1:
+    #         break
+
+    # # compute interpolation
+    # # alpha = 0 means completely kf0
+    # # alpha = 1 means completely kf1
+    # if t1 == t0:
+    #     alpha = 0.0
+    # else: 
+    #     alpha = (t - t0) / (t1 - t0)
+ 
     interp_transforms = []
 
     return interp_transforms
