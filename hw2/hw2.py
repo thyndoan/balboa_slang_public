@@ -233,7 +233,8 @@ def hw2_3(args):
         # HW 2.3: implement this
         # change np.zeros into the right matrix
         # use mesh.model_matrix
-        MVP = np.zeros((4, 4), dtype=np.float32)
+        MVP = world_to_screen @ mesh.model_matrix
+        
         ones = np.ones((mesh.vertices.shape[0], 1), dtype=mesh.vertices.dtype)
         vertices = np.concatenate(
             [mesh.vertices, ones],
@@ -269,7 +270,36 @@ def hw2_3(args):
             inv_depth = inv_depth_list[mesh_id]
             for tri_id in range(mesh.faces.shape[0]):
                 # HW 2.3: implement this
-                # (basically the same as HW 2.2)
+                # copied from HW 2.2
+                # use mesh.faces[tri_id] to obtain the vertex indices
+                v0, v1, v2 = mesh.faces[tri_id]
+
+                # sp0, sp1, sp2 from screen_vertices
+                sp0 = screen_vertices[v0]
+                sp1 = screen_vertices[v1]
+                sp2 = screen_vertices[v2]
+
+                # inv_depth0, inv_depth1, inv_depth2 from the Z coordinates
+                depth0 = -mesh.vertices[v0][2]
+                depth1 = -mesh.vertices[v1][2]
+                depth2 = -mesh.vertices[v2][2]
+
+                # (recall that camera-space depth is -z, which we assume is positive)
+                inv_depth0 = 1.0 / depth0
+                inv_depth1 = 1.0 / depth1
+                inv_depth2 = 1.0 / depth2
+
+                # aabb_min & aabb_max like in 2.1
+                xs = [sp0[0], sp1[0], sp2[0]]
+                ys = [sp0[1], sp1[1], sp2[1]]
+
+                aabb_min = (math.floor(min(xs)), math.floor(min(ys)))
+                aabb_max = (math.ceil(max(xs)), math.ceil(max(ys)))
+
+                # c0, c1, c2 from mesh.vertex_colors
+                c0 = mesh.vertex_colors[v0]
+                c1 = mesh.vertex_colors[v1]
+                c2 = mesh.vertex_colors[v2]
 
                 if aabb_min[0] > aabb_max[0] or aabb_min[1] > aabb_max[1]:
                     continue
