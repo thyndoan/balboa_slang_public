@@ -247,16 +247,14 @@ def hw2_3(args):
         # The resulting vertices should contain
         # (screen_x, screen_y, inverse_depth).
         # eq 28, I used AI to help me explain this eq in code because I wasn't sure how to write it
-        # after it explained the format, I could be able to write this and eq 30
+        # after it explained the format, I could be able to write this
         vertices[:, 0] /= vertices[:, 3]
         vertices[:, 1] /= vertices[:, 3]
         vertices[:, 2] /= vertices[:, 3]
 
         # inverse_depth should be positive
-        # z after projection in inverse depth, use eq30
-
-        vertices[:, 2] = np.abs(vertices[:, 2])
-
+        # after the above division, column 2 should be 1/(-z) which is the inverse depth and positive
+    
         inv_depth_list.append(np.ascontiguousarray(vertices[:, 2]))
         screen_vertices_list.append(np.ascontiguousarray(vertices[:, :2]))
 
@@ -290,14 +288,9 @@ def hw2_3(args):
                 sp2 = screen_vertices[v2]
 
                 # inv_depth0, inv_depth1, inv_depth2 from the Z coordinates
-                depth0 = -mesh.vertices[v0][2]
-                depth1 = -mesh.vertices[v1][2]
-                depth2 = -mesh.vertices[v2][2]
-
-                # (recall that camera-space depth is -z, which we assume is positive)
-                inv_depth0 = 1.0 / depth0
-                inv_depth1 = 1.0 / depth1
-                inv_depth2 = 1.0 / depth2
+                inv_depth0 = inv_depth[v0]
+                inv_depth1 = inv_depth[v1]
+                inv_depth2 = inv_depth[v2]
 
                 # aabb_min & aabb_max like in 2.1
                 xs = [sp0[0], sp1[0], sp2[0]]
