@@ -93,8 +93,18 @@ def hw2_2(args):
     mesh = hw2_scene.parse_triangle_mesh(args.mesh)
 
     def to_screen(p):
-        # HW2.2: implement this (basically the same as HW2.1)
-        return (0.0, 0.0)
+        # copied from hw2_1
+        x, y, z = p
+
+        # perspective projection (turning 3d into 2d)
+        xp = -x / z
+        yp = -y / z
+        
+        # access "s" using args.s
+        # screen mapping
+        sx = args.width * ((xp + args.s * a) / (2 * args.s * a))
+        sy = args.height * ((args.s - yp) / (2 * args.s))
+        return (sx, sy)
 
     # splat the triangles onto the screen
     screen_vertices = [to_screen(mesh.vertices[vid, :]) for vid in range(mesh.vertices.shape[0])]
@@ -111,14 +121,36 @@ def hw2_2(args):
             clear_value=spy.float4(float("inf"), 0.0, 0.0, 0.0)
         )
         for tri_id in range(mesh.faces.shape[0]):
-            # HW2.2: implement this
-            # you need to retrieve/compute:
-            # sp0, sp1, sp2 from screen_vertices
-            # inv_depth0, inv_depth1, inv_depth2 from the Z coordinates
-            # (recall that camera-space depth is -z, which we assume is positive)
-            # aabb_min & aabb_max like in 2.1
-            # c0, c1, c2 from mesh.vertex_colors
+            # implemented
             # use mesh.faces[tri_id] to obtain the vertex indices
+            v0, v1, v2 = mesh.faces[tri_id]
+
+            # sp0, sp1, sp2 from screen_vertices
+            sp0 = screen_vertices[v0]
+            sp1 = screen_vertices[v1]
+            sp2 = screen_vertices[v2]
+
+            # inv_depth0, inv_depth1, inv_depth2 from the Z coordinates
+            depth0 = -mesh.vertices[v0][2]
+            depth1 = -mesh.vertices[v1][2]
+            depth2 = -mesh.vertices[v2][2]
+
+            # (recall that camera-space depth is -z, which we assume is positive)
+            inv_depth0 = 1.0 / depth0
+            inv_depth1 = 1.0 / depth1
+            inv_depth2 = 1.0 / depth2
+
+            # aabb_min & aabb_max like in 2.1
+            xs = [sp0[0], sp1[0], sp2[0]]
+            ys = [sp0[1], sp1[1], sp2[1]]
+
+            aabb_min = (math.floor(min(xs)), math.floor(min(ys)))
+            aabb_max = (math.ceil(max(xs)), math.ceil(max(ys)))
+
+            # c0, c1, c2 from mesh.vertex_colors
+            c0 = mesh.vertex_colors[v0]
+            c1 = mesh.vertex_colors[v1]
+            c2 = mesh.vertex_colors[v2]
 
             if aabb_min[0] > aabb_max[0] or aabb_min[1] > aabb_max[1]:
                 continue
