@@ -186,9 +186,106 @@ def compose_transformations(transformations):
     """
     F = np.eye(4, dtype=np.float32)
 
+    #implemented
     for transform in transformations:
-        pass
-        # HW 2.3 TODO: your code here
+        #for scaling, eq.18
+        if "scale" in transform:
+            sx, sy, sz = transform["scale"]
+            M = np.array([
+                [sx, 0, 0, 0],
+                [0, sy, 0, 0],
+                [0, 0, sz, 0],
+                [0, 0, 0, 1]
+            ], dtype=np.float32)
+
+            F = M @ F
+
+        # for translating, eq.19
+        elif "translate" in transform:
+            tx, ty, tz = transform["translate"]
+            M = np.array([
+                [1, 0, 0, tx],
+                [0, 1, 0, ty],
+                [0, 0, 1, tz],
+                [0, 0, 0, 1]
+            ], dtype=np.float32)
+
+            F = M @ F
+
+        # Rotate 
+        # rotate x-axis eq.20
+        elif "rotate_x" in transform:
+            theta = np.radians(transform["rotate_x"][0])
+            c = np.cos(theta)
+            s = np.sin(theta)
+
+            M = np.array([
+                [1, 0, 0, 0],
+                [0, c, -s, 0],
+                [0, s, c, 0],
+                [0, 0, 0, 1]
+            ], dtype=np.float32)
+
+            F = M @ F
+
+        # rotate y-axis eq.21
+        elif "rotate_y" in transform:
+            theta = np.radians(transform["rotate_y"][0])
+            c = np.cos(theta)
+            s = np.sin(theta)
+
+            M = np.array([
+                [c, 0, s, 0],
+                [0, 1, 0, 0],
+                [-s, 0, c, 0],
+                [0, 0, 0, 1]
+            ], dtype=np.float32)
+
+            F = M @ F
+
+        # rotate z-axis eq.22
+        elif "rotate_z" in transform:
+            theta = np.radians(transform["rotate_z"][0])
+            c = np.cos(theta)
+            s = np.sin(theta)
+
+            M = np.array([
+                [c, -s, 0, 0],
+                [s, c, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1]
+            ], dtype=np.float32)
+
+            F = M @ F
+
+        # look at eq23-26
+        elif "lookat" in transform:
+
+            # get position, target and up vector 
+            position = np.array(transform["lookat"]["position"], dtype=np.float32)
+            target = np.array(transform["lookat"]["target"], dtype=np.float32)
+            up = np.array(transform["lookat"]["up"], dtype=np.float32)
+
+            # eq23
+            d = target - position
+            d = d / np.linalg.norm(d)
+
+            # eq24
+            r = np.cross(d, up)
+            r = r / np.linalg.norm(r)
+
+            # eq25
+            u = np.cross(r, d)
+
+            # eq26
+            M = np.array([
+                [r[0], u[0], -d[0], position[0]],
+                [r[1], u[1], -d[1], position[1]],
+                [r[2], u[2], -d[2], position[2]],
+                [0, 0, 0 , 1]
+            ], dtype=np.float32)
+
+            F = M @ F
 
     return F
 

@@ -234,7 +234,7 @@ def hw2_3(args):
         # change np.zeros into the right matrix
         # use mesh.model_matrix
         MVP = world_to_screen @ mesh.model_matrix
-        
+
         ones = np.ones((mesh.vertices.shape[0], 1), dtype=mesh.vertices.dtype)
         vertices = np.concatenate(
             [mesh.vertices, ones],
@@ -347,6 +347,16 @@ def interpolate_transformation(transform_keyframes, t):
     #
     # Return a list of transformations in the same format
     # as the "transform" field in the scene JSON.
+
+    #for scaling, eq.18
+    if "scale" in transform:
+        sx, sy, sz = transform["scale"]
+        M = np.array([
+            [sx, 0, 0, 0],
+            [0, sy, 0, 0],
+            [0, 0, sz, 0],
+            [0, 0, 0, 1]
+        ], dtype=np.float32)
     interp_transforms = []
 
     return interp_transforms
