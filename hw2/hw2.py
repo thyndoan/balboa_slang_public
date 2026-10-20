@@ -205,12 +205,27 @@ def hw2_3(args):
     a = width / height
 
     # HW 2.3: implement this
-    # change np.zeros into the right matrices
-    projection = np.zeros((4, 4), dtype=np.float32)
-    camera_to_screen = np.zeros((4, 4), dtype=np.float32)
+    # Perspective projection in homogeneous coordinates, use eq.29
+    projection = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 0, 1],
+        [0, 0, -1, 0]
+    ], dtype=np.float32)
+
+    # camera space to screen space, similar to part 2, just write in matrix
+    camera_to_screen = np.array([
+        [width/(2*camera.s*a), 0, 0, width/2],
+        [0, -height/(2*camera.s), 0, height/2],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+    ], dtype=np.float32)
+
     # use camera.cam_to_world
-    view_matrix = np.zeros((4, 4), dtype=np.float32)
-    world_to_screen = np.zeros((4, 4), dtype=np.float32)
+    # view matrix is inverse of cam to world
+    view_matrix = np.linalg.inv(camera.cam_to_world)
+
+    world_to_screen = (camera_to_screen @ projection @ view_matrix)
     
     screen_vertices_list = []
     inv_depth_list = []
@@ -218,19 +233,28 @@ def hw2_3(args):
         # HW 2.3: implement this
         # change np.zeros into the right matrix
         # use mesh.model_matrix
-        MVP = np.zeros((4, 4), dtype=np.float32)
+        MVP = world_to_screen @ mesh.model_matrix
+
         ones = np.ones((mesh.vertices.shape[0], 1), dtype=mesh.vertices.dtype)
         vertices = np.concatenate(
             [mesh.vertices, ones],
             axis=1
         )
+
         # transform vertices using MVP & homogeneous coordinates division
+        vertices = vertices @ MVP.T
+
         # The resulting vertices should contain
         # (screen_x, screen_y, inverse_depth).
+        # eq 28, I used AI to help me explain this eq in code because I wasn't sure how to write it
+        # after it explained the format, I could be able to write this
+        vertices[:, 0] /= vertices[:, 3]
+        vertices[:, 1] /= vertices[:, 3]
+        vertices[:, 2] /= vertices[:, 3]
+
         # inverse_depth should be positive
-        # ---
-        # HW 2.3: your code here
-        # ---
+        # after the above division, column 2 should be 1/(-z) which is the inverse depth and positive
+    
         inv_depth_list.append(np.ascontiguousarray(vertices[:, 2]))
         screen_vertices_list.append(np.ascontiguousarray(vertices[:, :2]))
 
@@ -254,7 +278,31 @@ def hw2_3(args):
             inv_depth = inv_depth_list[mesh_id]
             for tri_id in range(mesh.faces.shape[0]):
                 # HW 2.3: implement this
-                # (basically the same as HW 2.2)
+                # copied from HW 2.2
+                # use mesh.faces[tri_id] to obtain the vertex indices
+                v0, v1, v2 = mesh.faces[tri_id]
+
+                # sp0, sp1, sp2 from screen_vertices
+                sp0 = screen_vertices[v0]
+                sp1 = screen_vertices[v1]
+                sp2 = screen_vertices[v2]
+
+                # inv_depth0, inv_depth1, inv_depth2 from the Z coordinates
+                inv_depth0 = inv_depth[v0]
+                inv_depth1 = inv_depth[v1]
+                inv_depth2 = inv_depth[v2]
+
+                # aabb_min & aabb_max like in 2.1
+                xs = [sp0[0], sp1[0], sp2[0]]
+                ys = [sp0[1], sp1[1], sp2[1]]
+
+                aabb_min = (math.floor(min(xs)), math.floor(min(ys)))
+                aabb_max = (math.ceil(max(xs)), math.ceil(max(ys)))
+
+                # c0, c1, c2 from mesh.vertex_colors
+                c0 = mesh.vertex_colors[v0]
+                c1 = mesh.vertex_colors[v1]
+                c2 = mesh.vertex_colors[v2]
 
                 if aabb_min[0] > aabb_max[0] or aabb_min[1] > aabb_max[1]:
                     continue
@@ -297,11 +345,34 @@ def hw2_3(args):
 
 def interpolate_transformation(transform_keyframes, t):
     # HW 2.4: implement this
-    # Find the two keyframes surrounding t and linearly
     # interpolate the corresponding transformation parameters.
     #
     # Return a list of transformations in the same format
     # as the "transform" field in the scene JSON.
+    
+    # this is for part 4
+    # if len(transform_keyframes) == 0:
+    #     return[]
+    
+    # # Find the two keyframes surrounding t and linearly
+    # for i in range(len(transform_keyframes) - 1):
+    #     kf0 = transform_keyframes[i]
+    #     kf1 = transform_keyframes[i+1]
+
+    #     t0 = kf0["time"]
+    #     t1 = kf1["time"]
+
+    #     if t0 <= t <= 1:
+    #         break
+
+    # # compute interpolation
+    # # alpha = 0 means completely kf0
+    # # alpha = 1 means completely kf1
+    # if t1 == t0:
+    #     alpha = 0.0
+    # else: 
+    #     alpha = (t - t0) / (t1 - t0)
+ 
     interp_transforms = []
 
     return interp_transforms
