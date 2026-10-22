@@ -88,8 +88,11 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
     float b2 = w2 / sum;
 
     // (d) obtain depth/ z value (equation 16)
-    float inv_depth = b0 * inv_depth0 + b1 * inv_depth1 + b2 * inv_depth2;
-
+    // (d) obtain depth using projected barycentric coordinates
+    float inv_depth = b0p * inv_depth0
+                    + b1p * inv_depth1
+                    + b2p * inv_depth2;
+    
     float depth = 1.0 / inv_depth;
 
     // depth test
