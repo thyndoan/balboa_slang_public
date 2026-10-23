@@ -208,6 +208,7 @@ void compute_main(
                     // The denominator is the squared segment length.
                     float t = dot(p - a, ab) / dot(ab, ab);
 
+<<<<<<< HEAD
                     // Make sure the projected point is
                     // between the two endpoints.
                     if (t >= 0.0 && t <= 1.0) {
@@ -217,6 +218,11 @@ void compute_main(
 
                         // If the pixel is within half the stroke width of the segment,
                         // it is part of the stroke.
+=======
+                    if (t >= 0.0 && t <= 1.0) {
+                        float2 closest = a + t * ab;
+
+>>>>>>> main
                         if (length(p - closest) <= r) {
                             hit = true;
                         }
@@ -238,7 +244,11 @@ void compute_main(
 
                         if (length(p - closest) <= r) {
                             hit = true;
+<<<<<<< HEAD
                         }
+=======
+                        }   
+>>>>>>> main
                     }
                 }
 

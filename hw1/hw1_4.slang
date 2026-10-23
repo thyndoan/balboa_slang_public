@@ -51,8 +51,13 @@ void compute_main(
 
     // Set the initial pixel color to the scene background.
     image[tid] = float4(background, 1.0);
+<<<<<<< HEAD
 
     // Calculate the pixel center and flip the y-coordinate.
+=======
+        
+    // TODO: your code here
+>>>>>>> main
     float2 p = float2(
         tid.x + 0.5,
         height - (tid.y + 0.5)
@@ -85,10 +90,14 @@ void compute_main(
         // the circle and polyline calculations.
         float2 object_p = object_point.xy;
 
+<<<<<<< HEAD
         // -----------------------------------------
         // Circle rendering
         // -----------------------------------------
 
+=======
+        // Circle portion
+>>>>>>> main
         if (shape.type == ShapeType.Circle) {
 
             // Retrieve the circle associated with this shape.
@@ -112,10 +121,14 @@ void compute_main(
             }
         }
 
+<<<<<<< HEAD
         // -----------------------------------------
         // Polyline rendering
         // -----------------------------------------
 
+=======
+        // Polyline portion
+>>>>>>> main
         else if (shape.type == ShapeType.Polyline) {
 
             // Retrieve the polyline associated with this shape.
@@ -126,11 +139,15 @@ void compute_main(
             bool in_fill = false;
             bool in_stroke = false;
 
+<<<<<<< HEAD
             // -----------------------------------------
             // Fill
             // -----------------------------------------
 
             // Only closed polylines with fill enabled can be filled.
+=======
+            // Fill
+>>>>>>> main
             if (shape.use_fill && polyline.closed) {
 
                 int winding = 0;
@@ -185,10 +202,14 @@ void compute_main(
                 }
             }
 
+<<<<<<< HEAD
             // -----------------------------------------
             // Stroke
             // -----------------------------------------
 
+=======
+            // Stroke
+>>>>>>> main
             if (shape.use_stroke) {
 
                 // Half of the stroke width.
@@ -238,8 +259,12 @@ void compute_main(
                     }
                 }
 
+<<<<<<< HEAD
                 // If the polyline is closed, check the final
                 // segment connecting the last point to the first.
+=======
+                // Closing segment, connect last point to first point if polyline is closed
+>>>>>>> main
                 if (polyline.closed &&
                     polyline.pts_end - polyline.pts_begin > 1) {
 
@@ -266,7 +291,11 @@ void compute_main(
                     }
                 }
 
+<<<<<<< HEAD
                 // Check interior vertices to produce round joins.
+=======
+                // Check vertices for round joins
+>>>>>>> main
                 for (int i = polyline.pts_begin + 1;
                      i < polyline.pts_end - 1;
                      i++) {
@@ -278,8 +307,12 @@ void compute_main(
                     }
                 }
 
+<<<<<<< HEAD
                 // Check the first and last vertices for
                 // round joins on closed polylines.
+=======
+                // round joins when the polyline is closed
+>>>>>>> main
                 if (polyline.closed &&
                     polyline.pts_end - polyline.pts_begin > 1) {
 
@@ -296,11 +329,15 @@ void compute_main(
                 }
             }
 
+<<<<<<< HEAD
             // -----------------------------------------
             // Painting
             // -----------------------------------------
 
             // Draw the fill first.
+=======
+            // Painting 
+>>>>>>> main
             if (in_fill) {
                 image[tid] = shape.fill_rgba;
             }

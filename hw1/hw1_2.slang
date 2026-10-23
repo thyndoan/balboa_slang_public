@@ -102,6 +102,7 @@ void compute_main(
                 // along the infinite line through A and B.
                 float t = dot(AP, AB) / denom;
 
+<<<<<<< HEAD
                 // Only accept the projection if it falls
                 // between A and B.
                 //
@@ -119,6 +120,14 @@ void compute_main(
 
                     // The pixel belongs to the stroke if its
                     // distance is no greater than half the width.
+=======
+                // Count pixels that have closest point lies on the segment
+                if (t >= 0.0 && t <= 1.0) {
+                    float2 closest = A + t * AB;
+                    float distance = length(p - closest);
+
+                    // Stroke extends half the stroke width on each side
+>>>>>>> main
                     if (distance <= stroke_width * 0.5) {
                         in_stroke = true;
                     }
@@ -143,11 +152,18 @@ void compute_main(
                 float t = dot(AP, AB) / denom;
 
                 if (t >= 0.0 && t <= 1.0) {
+<<<<<<< HEAD
 
                     float2 closest = A + t * AB;
 
                     float distance = length(p - closest);
 
+=======
+                    float2 closest = A + t * AB;
+
+                    float distance = length(p - closest);
+
+>>>>>>> main
                     if (distance <= stroke_width * 0.5) {
                         in_stroke = true;
                     }
