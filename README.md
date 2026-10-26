@@ -34,8 +34,6 @@ Balboa depends on [SlangPy](https://github.com/shader-slang/slangpy) as a GPU pr
 
 **Intel Macs:** SlangPy does not currently publish macOS x86_64 wheels, so setup may require building SlangPy from source. If you are using an Intel Mac and `uv sync` fails because no compatible SlangPy package is available, you may need to build SlangPy from source. Contact the staff/instructor if you run into issues.
 
-=======
-
 # HW2.8 custom scene
 
 - Location:
