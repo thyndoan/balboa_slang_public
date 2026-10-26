@@ -1,0 +1,271 @@
+{
+  "duration": 8,
+  "camera": {
+    "resolution": [640, 480],
+    "s": 0.5,
+    "transform": [
+      {
+        "lookat": {
+          "position": [0, 2.5, 7],
+          "target": [0, 0.8, 0],
+          "up": [0, 1, 0]
+        }
+      }
+    ]
+  },
+  "background": [0.55, 0.75, 0.95],
+  "light": { "light_dir": [0.4, 1, 0.6] },
+  "objects": [
+    {
+      "filename": "ground.json",
+      "transform": [],
+      "material": { "Kd": [0.3, 0.55, 0.25], "Ks": [0, 0, 0] }
+    },
+    {
+      "filename": "tree.json",
+      "transform": [{ "translate": [0, 0, 0] }],
+      "material": { "Kd": [0.15, 0.5, 0.2], "Ks": [0, 0, 0] }
+    },
+    {
+      "filename": "rabbit.json",
+      "transform_keyframes": [
+        {
+          "time": 0.0,
+          "transform": [
+            { "rotate_y": [90.0] },
+            { "translate": [0.0, 0.0, 2.3] }
+          ]
+        },
+        {
+          "time": 0.25,
+          "transform": [
+            { "rotate_y": [101.25] },
+            { "translate": [0.449, 0.6, 2.256] }
+          ]
+        },
+        {
+          "time": 0.5,
+          "transform": [
+            { "rotate_y": [112.5] },
+            { "translate": [0.88, 0.8, 2.125] }
+          ]
+        },
+        {
+          "time": 0.75,
+          "transform": [
+            { "rotate_y": [123.75] },
+            { "translate": [1.278, 0.6, 1.912] }
+          ]
+        },
+        {
+          "time": 1.0,
+          "transform": [
+            { "rotate_y": [135.0] },
+            { "translate": [1.626, 0.0, 1.626] }
+          ]
+        },
+        {
+          "time": 1.25,
+          "transform": [
+            { "rotate_y": [146.25] },
+            { "translate": [1.912, 0.6, 1.278] }
+          ]
+        },
+        {
+          "time": 1.5,
+          "transform": [
+            { "rotate_y": [157.5] },
+            { "translate": [2.125, 0.8, 0.88] }
+          ]
+        },
+        {
+          "time": 1.75,
+          "transform": [
+            { "rotate_y": [168.75] },
+            { "translate": [2.256, 0.6, 0.449] }
+          ]
+        },
+        {
+          "time": 2.0,
+          "transform": [
+            { "rotate_y": [180.0] },
+            { "translate": [2.3, 0.0, 0.0] }
+          ]
+        },
+        {
+          "time": 2.25,
+          "transform": [
+            { "rotate_y": [191.25] },
+            { "translate": [2.256, 0.6, -0.449] }
+          ]
+        },
+        {
+          "time": 2.5,
+          "transform": [
+            { "rotate_y": [202.5] },
+            { "translate": [2.125, 0.8, -0.88] }
+          ]
+        },
+        {
+          "time": 2.75,
+          "transform": [
+            { "rotate_y": [213.75] },
+            { "translate": [1.912, 0.6, -1.278] }
+          ]
+        },
+        {
+          "time": 3.0,
+          "transform": [
+            { "rotate_y": [225.0] },
+            { "translate": [1.626, 0.0, -1.626] }
+          ]
+        },
+        {
+          "time": 3.25,
+          "transform": [
+            { "rotate_y": [236.25] },
+            { "translate": [1.278, 0.6, -1.912] }
+          ]
+        },
+        {
+          "time": 3.5,
+          "transform": [
+            { "rotate_y": [247.5] },
+            { "translate": [0.88, 0.8, -2.125] }
+          ]
+        },
+        {
+          "time": 3.75,
+          "transform": [
+            { "rotate_y": [258.75] },
+            { "translate": [0.449, 0.6, -2.256] }
+          ]
+        },
+        {
+          "time": 4.0,
+          "transform": [
+            { "rotate_y": [270.0] },
+            { "translate": [0.0, 0.0, -2.3] }
+          ]
+        },
+        {
+          "time": 4.25,
+          "transform": [
+            { "rotate_y": [281.25] },
+            { "translate": [-0.449, 0.6, -2.256] }
+          ]
+        },
+        {
+          "time": 4.5,
+          "transform": [
+            { "rotate_y": [292.5] },
+            { "translate": [-0.88, 0.8, -2.125] }
+          ]
+        },
+        {
+          "time": 4.75,
+          "transform": [
+            { "rotate_y": [303.75] },
+            { "translate": [-1.278, 0.6, -1.912] }
+          ]
+        },
+        {
+          "time": 5.0,
+          "transform": [
+            { "rotate_y": [315.0] },
+            { "translate": [-1.626, 0.0, -1.626] }
+          ]
+        },
+        {
+          "time": 5.25,
+          "transform": [
+            { "rotate_y": [326.25] },
+            { "translate": [-1.912, 0.6, -1.278] }
+          ]
+        },
+        {
+          "time": 5.5,
+          "transform": [
+            { "rotate_y": [337.5] },
+            { "translate": [-2.125, 0.8, -0.88] }
+          ]
+        },
+        {
+          "time": 5.75,
+          "transform": [
+            { "rotate_y": [348.75] },
+            { "translate": [-2.256, 0.6, -0.449] }
+          ]
+        },
+        {
+          "time": 6.0,
+          "transform": [
+            { "rotate_y": [360.0] },
+            { "translate": [-2.3, 0.0, -0.0] }
+          ]
+        },
+        {
+          "time": 6.25,
+          "transform": [
+            { "rotate_y": [371.25] },
+            { "translate": [-2.256, 0.6, 0.449] }
+          ]
+        },
+        {
+          "time": 6.5,
+          "transform": [
+            { "rotate_y": [382.5] },
+            { "translate": [-2.125, 0.8, 0.88] }
+          ]
+        },
+        {
+          "time": 6.75,
+          "transform": [
+            { "rotate_y": [393.75] },
+            { "translate": [-1.912, 0.6, 1.278] }
+          ]
+        },
+        {
+          "time": 7.0,
+          "transform": [
+            { "rotate_y": [405.0] },
+            { "translate": [-1.626, 0.0, 1.626] }
+          ]
+        },
+        {
+          "time": 7.25,
+          "transform": [
+            { "rotate_y": [416.25] },
+            { "translate": [-1.278, 0.6, 1.912] }
+          ]
+        },
+        {
+          "time": 7.5,
+          "transform": [
+            { "rotate_y": [427.5] },
+            { "translate": [-0.88, 0.8, 2.125] }
+          ]
+        },
+        {
+          "time": 7.75,
+          "transform": [
+            { "rotate_y": [438.75] },
+            { "translate": [-0.449, 0.6, 2.256] }
+          ]
+        },
+        {
+          "time": 8.0,
+          "transform": [
+            { "rotate_y": [450.0] },
+            { "translate": [-0.0, 0.0, 2.3] }
+          ]
+        }
+      ],
+      "material": {
+        "Kd": [0.85, 0.75, 0.65],
+        "Ks": [0.1, 0.1, 0.1],
+        "exponent": 16
+      }
+    }
+  ]
+}
