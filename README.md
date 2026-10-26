@@ -37,7 +37,7 @@ Balboa depends on [SlangPy](https://github.com/shader-slang/slangpy) as a GPU pr
 # HW2.8 custom scene
 
 - Location:
-  [`scene/hw2/hw2_8/`](scene/hw2/hw2_8)
+  [`scenes/hw2/hw2_8/`](scenes/hw2/hw2_8)
 
 # Contributions
 
