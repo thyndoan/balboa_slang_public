@@ -34,15 +34,24 @@ Balboa depends on [SlangPy](https://github.com/shader-slang/slangpy) as a GPU pr
 
 **Intel Macs:** SlangPy does not currently publish macOS x86_64 wheels, so setup may require building SlangPy from source. If you are using an Intel Mac and `uv sync` fails because no compatible SlangPy package is available, you may need to build SlangPy from source. Contact the staff/instructor if you run into issues.
 
-# HW2.8 custom scene
+# HW2_8 custom scene
 
 - Location:
   [`scenes/hw2/hw2_8/`](scenes/hw2/hw2_8)
 
+# HW3_7 custom scene
+
+- Location:
+  [`scenes/hw3/hw3_7`](scenes/hw3/hw3_7)
+- Please run `uv run python main.py 3_6 scenes/hw3/hw3_7/cat_scene.json` to see the animation!
+
 # Contributions for HW3
 
-We used AI to help us understand the concepts of part 1-6.
-We also asked it to help us debug.
+- We used AI to help us understand the concepts visually for part 1-6.
+- We also asked it to help us with the debugging.
+- We also used AI to help us with the custom scene
+
+## details
 
 - One of our problem was our code didn’t apply xform_pt and xform_vec to every ray, so some rays weren’t transformed into object space. After the AI explained how these functions work, we fixed our code to use them correctly.
 

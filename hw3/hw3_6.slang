@@ -46,7 +46,8 @@ bool intersect_shape(
     //add meshes, vertices, triangles for the triangle mesh intersection
     StructuredBuffer<TriangleMesh> meshes,     
     StructuredBuffer<float3> vertices,         
-    StructuredBuffer<uint3> triangles,         
+    StructuredBuffer<uint3> triangles,     
+    StructuredBuffer<BVHNode> bvh_nodes,    
     float t_min,
     float t_max,
     out float t_hit,
@@ -66,22 +67,45 @@ bool intersect_shape(
                             t_min, t_max, t_hit);
     }
     
-    // if it's a triangle mesh
+    // if it's a triangle mesh: use the BVH instead of testing every triangle
     TriangleMesh mesh = meshes[shape.index];
     bool found = false;
-    for (uint j = mesh.triangle_begin; j < mesh.triangle_end; j++) {
-        uint3 tri = triangles[j] + mesh.vertex_offset;
-        float3 b;
-        float t;
-        if (intersect_tri(vertices[tri.x], vertices[tri.y], vertices[tri.z],
-                          obj_origin, obj_dir, t_min, t_hit, b, t)) {
-            t_hit = t;
-            hit_tri = j;
-            hit_bary = b;
-            found = true;
+
+    uint node_index = mesh.bvh_root_index;
+    uint end_index = bvh_nodes[mesh.bvh_root_index].next_index;  // end of this mesh's nodes
+
+    while (node_index < end_index) {
+        BVHNode node = bvh_nodes[node_index];
+
+        // Missed the box -> Skip everything inside it.
+        if (!intersect_aabb(node.bbox_min, node.bbox_max,
+                            obj_origin, obj_dir, t_min, t_hit)) {
+            node_index = node.next_index;
+            continue;
+        }
+
+        if (node.is_leaf) {
+            // Each leaf box hold 1-4 triangles. Loop through them and test for intersection 
+            for (uint j = node.triangle_begin; j < node.triangle_end; j++) {
+                uint3 tri = triangles[j] + mesh.vertex_offset;
+                float3 b;
+                float t;
+
+                // test for intersection with the triangle
+                if (intersect_tri(vertices[tri.x], vertices[tri.y], vertices[tri.z],
+                                  obj_origin, obj_dir, t_min, t_hit, b, t)) {
+                    t_hit = t;
+                    hit_tri = j;
+                    hit_bary = b;
+                    found = true;
+                }
+            }
+            node_index = node.next_index;   // done with this leaf, traverse to the next node
+        } else {
+            node_index = node_index + 1;    // hit an inner box -> look inside
         }
     }
-    return found;  
+    return found; 
 }
 
 // Check whether another sphere blocks the light.
@@ -95,7 +119,8 @@ bool is_in_shadow(
     StructuredBuffer<Sphere> spheres,
     StructuredBuffer<TriangleMesh> meshes,  
     StructuredBuffer<float3> vertices,       
-    StructuredBuffer<uint3> triangles  
+    StructuredBuffer<uint3> triangles,
+    StructuredBuffer<BVHNode> bvh_nodes  
 ) {
     for (int i = 0; i < num_shapes; i++) {
 
@@ -111,6 +136,7 @@ bool is_in_shadow(
             meshes,
             vertices,
             triangles,
+            bvh_nodes,
             EPSILON,
             light_distance - EPSILON,
             shadow_t,
@@ -182,7 +208,7 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
             uint tri;
             float3 bary;
 
-            if (intersect_shape(ray_origin, ray_dir, shapes[i], spheres, meshes, vertices, triangles,
+            if (intersect_shape(ray_origin, ray_dir, shapes[i], spheres, meshes, vertices, triangles, bvh_nodes,
                                 ray_t_min, closest_t, t, tri, bary)) {
                 closest_t = t;
                 hit_shape = i;
@@ -251,7 +277,7 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                 light_distance,
                 shapes,
                 num_shapes,
-                spheres, meshes, vertices, triangles
+                spheres, meshes, vertices, triangles, bvh_nodes
             );
 
             if (shadowed) {
