@@ -41,8 +41,8 @@ Balboa depends on [SlangPy](https://github.com/shader-slang/slangpy) as a GPU pr
 
 # Contributions for HW3
 
-We used AI to help us understand the concepts of part 1-6.
-We also asked it to help us debug.
+We used AI to help us understand the concepts visually for part 1-6.
+We also asked it to help us with the debugging.
 
 - One of our problem was our code didn’t apply xform_pt and xform_vec to every ray, so some rays weren’t transformed into object space. After the AI explained how these functions work, we fixed our code to use them correctly.
 
