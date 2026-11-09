@@ -44,16 +44,142 @@ def compose_transformations(transformations):
         Given a list of transformations, compose them into a matrix.
     """
     # HW 3.4: copy paste your HW2.3 code here
-
     F = np.eye(4, dtype=np.float32)
+
+    for transform in transformations:
+        #for scaling, eq.18
+        if "scale" in transform:
+            sx, sy, sz = transform["scale"]
+            M = np.array([
+                [sx, 0, 0, 0],
+                [0, sy, 0, 0],
+                [0, 0, sz, 0],
+                [0, 0, 0, 1]
+            ], dtype=np.float32)
+
+            F = M @ F
+
+        # for translating, eq.19
+        elif "translate" in transform:
+            tx, ty, tz = transform["translate"]
+            M = np.array([
+                [1, 0, 0, tx],
+                [0, 1, 0, ty],
+                [0, 0, 1, tz],
+                [0, 0, 0, 1]
+            ], dtype=np.float32)
+
+            F = M @ F
+
+        # Rotate 
+        # rotate x-axis eq.20
+        elif "rotate_x" in transform:
+            theta = np.radians(transform["rotate_x"][0])
+            c = np.cos(theta)
+            s = np.sin(theta)
+
+            M = np.array([
+                [1, 0, 0, 0],
+                [0, c, -s, 0],
+                [0, s, c, 0],
+                [0, 0, 0, 1]
+            ], dtype=np.float32)
+
+            F = M @ F
+
+        # rotate y-axis eq.21
+        elif "rotate_y" in transform:
+            theta = np.radians(transform["rotate_y"][0])
+            c = np.cos(theta)
+            s = np.sin(theta)
+
+            M = np.array([
+                [c, 0, s, 0],
+                [0, 1, 0, 0],
+                [-s, 0, c, 0],
+                [0, 0, 0, 1]
+            ], dtype=np.float32)
+
+            F = M @ F
+
+        # rotate z-axis eq.22
+        elif "rotate_z" in transform:
+            theta = np.radians(transform["rotate_z"][0])
+            c = np.cos(theta)
+            s = np.sin(theta)
+
+            M = np.array([
+                [c, -s, 0, 0],
+                [s, c, 0, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1]
+            ], dtype=np.float32)
+
+            F = M @ F
+
+        # look at eq23-26
+        elif "lookat" in transform:
+
+            # get position, target and up vector 
+            position = np.array(transform["lookat"]["position"], dtype=np.float32)
+            target = np.array(transform["lookat"]["target"], dtype=np.float32)
+            up = np.array(transform["lookat"]["up"], dtype=np.float32)
+
+            # eq23
+            d = target - position
+            d = d / np.linalg.norm(d)
+
+            # eq24
+            r = np.cross(d, up)
+            r = r / np.linalg.norm(r)
+
+            # eq25
+            u = np.cross(r, d)
+
+            # eq26
+            M = np.array([
+                [r[0], u[0], -d[0], position[0]],
+                [r[1], u[1], -d[1], position[1]],
+                [r[2], u[2], -d[2], position[2]],
+                [0, 0, 0 , 1]
+            ], dtype=np.float32)
+
+            F = M @ F
+
     return F
 
 def interpolate_transformation(transform_keyframes, t):
     # HW 3.4: copy your HW2.4 code here.
 
-    # create a new transform from the two keyframes
-    interp_transforms = []
-    return interp_transforms
+    keyframes = sorted(transform_keyframes, key=lambda k: k['time'])
+    n = len(keyframes)
+
+    if n == 0:
+        return []
+    if n == 1 or t <= keyframes[0]['time']:
+        return keyframes[0]['transform']
+    if t >= keyframes[-1]['time']:
+        return keyframes[-1]['transform']
+
+    def lerp(v0, v1, w):
+        if isinstance(v0, dict):
+            return {k: lerp(v0[k], v1[k], w) for k in v0}
+        if isinstance(v0, (list, tuple)):
+            return [lerp(x, y, w) for x, y in zip(v0, v1)]
+        return (1 - w) * v0 + w * v1
+
+    for k0, k1 in zip(keyframes[:-1], keyframes[1:]):
+        t0, t1 = k0['time'], k1['time']
+        if t0 <= t <= t1:
+            w = 0.0 if t1 == t0 else (t - t0) / (t1 - t0)
+            result = []
+            for tr0, tr1 in zip(k0['transform'], k1['transform']):
+                name = next(iter(tr0))
+                result.append({name: lerp(tr0[name], tr1[name], w)})
+            return result
+
+    raise ValueError("Failed to find keyframe interval")
+
 
 def get_transformation(obj, t):
     transforms = obj.get('transform', [])
