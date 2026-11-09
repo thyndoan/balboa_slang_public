@@ -151,9 +151,35 @@ def compose_transformations(transformations):
 def interpolate_transformation(transform_keyframes, t):
     # HW 3.4: copy your HW2.4 code here.
 
-    # create a new transform from the two keyframes
-    interp_transforms = []
-    return interp_transforms
+    keyframes = sorted(transform_keyframes, key=lambda k: k['time'])
+    n = len(keyframes)
+
+    if n == 0:
+        return []
+    if n == 1 or t <= keyframes[0]['time']:
+        return keyframes[0]['transform']
+    if t >= keyframes[-1]['time']:
+        return keyframes[-1]['transform']
+
+    def lerp(v0, v1, w):
+        if isinstance(v0, dict):
+            return {k: lerp(v0[k], v1[k], w) for k in v0}
+        if isinstance(v0, (list, tuple)):
+            return [lerp(x, y, w) for x, y in zip(v0, v1)]
+        return (1 - w) * v0 + w * v1
+
+    for k0, k1 in zip(keyframes[:-1], keyframes[1:]):
+        t0, t1 = k0['time'], k1['time']
+        if t0 <= t <= t1:
+            w = 0.0 if t1 == t0 else (t - t0) / (t1 - t0)
+            result = []
+            for tr0, tr1 in zip(k0['transform'], k1['transform']):
+                name = next(iter(tr0))
+                result.append({name: lerp(tr0[name], tr1[name], w)})
+            return result
+
+    raise ValueError("Failed to find keyframe interval")
+
 
 def get_transformation(obj, t):
     transforms = obj.get('transform', [])
