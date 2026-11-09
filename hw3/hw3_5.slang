@@ -43,21 +43,45 @@ bool intersect_shape(
     float3 ray_dir,
     Shape shape,
     StructuredBuffer<Sphere> spheres,
+    //add meshes, vertices, triangles for the triangle mesh intersection
+    StructuredBuffer<TriangleMesh> meshes,     
+    StructuredBuffer<float3> vertices,         
+    StructuredBuffer<uint3> triangles,         
     float t_min,
     float t_max,
-    out float t_hit
+    out float t_hit,
+    out uint hit_tri,
+    out float3 hit_bary
 ) {
     t_hit = t_max;
-
-    if (shape.type != ShapeType.Sphere) {
-        return false;
-    }
+    hit_tri = 0;
+    hit_bary = float3(0.0, 0.0, 0.0);
 
     float3 obj_origin = xform_pt(shape.world_to_obj, ray_origin);  
-    float3 obj_dir = xform_vec(shape.world_to_obj, ray_dir);       
+    float3 obj_dir = xform_vec(shape.world_to_obj, ray_dir);  
 
-    return intersect_sphere(obj_origin, obj_dir, spheres[shape.index],
+    // if it's a sphere, part 4
+    if (shape.type == ShapeType.Sphere) {
+        return intersect_sphere(obj_origin, obj_dir, spheres[shape.index],
                             t_min, t_max, t_hit);
+    }
+    
+    // if it's a triangle mesh
+    TriangleMesh mesh = meshes[shape.index];
+    bool found = false;
+    for (uint j = mesh.triangle_begin; j < mesh.triangle_end; j++) {
+        uint3 tri = triangles[j] + mesh.vertex_offset;
+        float3 b;
+        float t;
+        if (intersect_tri(vertices[tri.x], vertices[tri.y], vertices[tri.z],
+                          obj_origin, obj_dir, t_min, t_hit, b, t)) {
+            t_hit = t;
+            hit_tri = j;
+            hit_bary = b;
+            found = true;
+        }
+    }
+    return found;  
 }
 
 // Check whether another sphere blocks the light.
@@ -68,25 +92,33 @@ bool is_in_shadow(
     float light_distance,
     StructuredBuffer<Shape> shapes,
     int num_shapes,
-    StructuredBuffer<Sphere> spheres
+    StructuredBuffer<Sphere> spheres,
+    StructuredBuffer<TriangleMesh> meshes,  
+    StructuredBuffer<float3> vertices,       
+    StructuredBuffer<uint3> triangles  
 ) {
     for (int i = 0; i < num_shapes; i++) {
 
         float shadow_t;
+        uint unused_tri;        
+        float3 unused_bary;
 
         if (intersect_shape(
             hit_point,
             light_dir,
             shapes[i],
             spheres,
+            meshes,
+            vertices,
+            triangles,
             EPSILON,
             light_distance - EPSILON,
-            shadow_t
+            shadow_t,
+            unused_tri, unused_bary
         )) {
             return true;
         }
     }
-
     return false;
 }
 
@@ -140,14 +172,21 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
         // Find the closest sphere intersection
         float closest_t = 1e30;
         int hit_shape = -1;
+        uint hit_tri = 0;
+        float3 hit_bary = float3(0.0, 0.0, 0.0);
 
         for (int i = 0; i < num_shapes; i++) {
 
             float t;
-            if (intersect_shape(ray_origin, ray_dir, shapes[i], spheres,
-                                ray_t_min, closest_t, t)) {
+            uint tri;
+            float3 bary;
+
+            if (intersect_shape(ray_origin, ray_dir, shapes[i], spheres, meshes, vertices, triangles,
+                                ray_t_min, closest_t, t, tri, bary)) {
                 closest_t = t;
                 hit_shape = i;
+                hit_tri= tri;
+                hit_bary = bary;
             }
         }
 
@@ -157,17 +196,35 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
             break;
         }
 
-        // Get the intersected sphere
+        // Normal
         Shape shape = shapes[hit_shape];
-        Sphere sphere = spheres[shape.index];
-
+        
         // Calculate intersection point and normal
         float3 hit_point = ray_origin + closest_t * ray_dir;
 
-        // Compute the plain sphere normal in object space.
-        // Bring it to world space with the inverse transpose of obj_to_world, then normalize it.
-        float3 obj_hit = xform_pt(shape.world_to_obj, hit_point);
-        float3 obj_normal = obj_hit - sphere.center;
+        float3 obj_normal;
+
+        // same as part 4
+        if (shape.type == ShapeType.Sphere) {
+            Sphere sphere = spheres[shape.index];
+            
+            // Compute the plain sphere normal in object space.
+            // Bring it to world space with the inverse transpose of obj_to_world
+            float3 obj_hit = xform_pt(shape.world_to_obj, hit_point);
+            obj_normal = obj_hit - sphere.center;
+        }
+
+        // else it's the triangle mesh
+        else {
+            TriangleMesh mesh = meshes[shape.index];
+            uint3 tri = triangles[hit_tri] + mesh.vertex_offset;
+            // Compute the interpolated normal in object space using barycentric coordinates
+            obj_normal = hit_bary.x * vertex_normals[tri.x]
+                        + hit_bary.y * vertex_normals[tri.y]
+                        + hit_bary.z * vertex_normals[tri.z];
+        }
+    
+        //then normalize it.
         float3 normal = normalize(xform_vec(transpose(shape.world_to_obj), obj_normal));
 
         // Get material properties
@@ -193,7 +250,7 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
                 light_distance,
                 shapes,
                 num_shapes,
-                spheres
+                spheres, meshes, vertices, triangles
             );
 
             if (shadowed) {
