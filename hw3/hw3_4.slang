@@ -35,7 +35,33 @@ bool intersect_sphere(
     return t_hit < t_max;
 }
 
+// Check whether a ray intersects a shape
+// Move the ray into the shape's object space with world_to_obj
+// Intersect there with the plain sphere.
+bool intersect_shape(
+    float3 ray_origin,
+    float3 ray_dir,
+    Shape shape,
+    StructuredBuffer<Sphere> spheres,
+    float t_min,
+    float t_max,
+    out float t_hit
+) {
+    t_hit = t_max;
+
+    if (shape.type != ShapeType.Sphere) {
+        return false;
+    }
+
+    float3 obj_origin = xform_pt(shape.world_to_obj, ray_origin);  
+    float3 obj_dir = xform_vec(shape.world_to_obj, ray_dir);       
+
+    return intersect_sphere(obj_origin, obj_dir, spheres[shape.index],
+                            t_min, t_max, t_hit);
+}
+
 // Check whether another sphere blocks the light.
+// Using transformed shapes instead  
 bool is_in_shadow(
     float3 hit_point,
     float3 light_dir,
@@ -46,18 +72,13 @@ bool is_in_shadow(
 ) {
     for (int i = 0; i < num_shapes; i++) {
 
-        if (shapes[i].type != ShapeType.Sphere) {
-            continue;
-        }
-
-        Sphere sphere = spheres[shapes[i].index];
-
         float shadow_t;
 
-        if (intersect_sphere(
+        if (intersect_shape(
             hit_point,
             light_dir,
-            sphere,
+            shapes[i],
+            spheres,
             EPSILON,
             light_distance - EPSILON,
             shadow_t
@@ -90,13 +111,17 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
     // Calculate the aspect ratio
     float aspect = float(width) / float(height);
 
-    // Calculate the pixel center on the image plane
-    float x = (2.0 * (float(tid.x) + 0.5) / float(width) - 1.0) * aspect;
-    float y = 1.0 - 2.0 * (float(tid.y) + 0.5) / float(height);
+    // Get image plane size from fov_x, calculate half height and half width
+    float half_width = tan(radians(camera.fov_x) / 2.0);
+    float half_height = half_width / aspect;
 
-    // Initial camera ray
-    float3 ray_origin = float3(0.0, 0.0, 0.0);
-    float3 ray_dir = normalize(float3(x, y, -1.0));
+    // Calculate the pixel center on the image plane, scale to the new plane size
+    float x = (2.0 * (float(tid.x) + 0.5) / float(width) - 1.0) * half_width;
+    float y = (1.0 - 2.0 * (float(tid.y) + 0.5) / float(height)) * half_height;
+
+    // Initial camera ray, move the camera ray from the camera space to world space
+    float3 ray_origin = xform_pt(camera.cam_to_world, float3(0.0, 0.0, 0.0));
+    float3 ray_dir = normalize(xform_vec(camera.cam_to_world, float3(x, y, -1.0)));
 
     // Accumulated color and reflection throughput
     float3 color = float3(0.0, 0.0, 0.0);
@@ -114,22 +139,9 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
 
         for (int i = 0; i < num_shapes; i++) {
 
-            if (shapes[i].type != ShapeType.Sphere) {
-                continue;
-            }
-
-            Sphere sphere = spheres[shapes[i].index];
-
             float t;
-
-            if (intersect_sphere(
-                ray_origin,
-                ray_dir,
-                sphere,
-                ray_t_min,
-                closest_t,
-                t
-            )) {
+            if (intersect_shape(ray_origin, ray_dir, shapes[i], spheres,
+                                ray_t_min, closest_t, t)) {
                 closest_t = t;
                 hit_shape = i;
             }
@@ -142,15 +154,21 @@ void compute_main(uint2 tid : SV_DispatchThreadID,
         }
 
         // Get the intersected sphere
-        Sphere hit_sphere = spheres[shapes[hit_shape].index];
+        Shape shape = shapes[hit_shape];
+        Sphere sphere = spheres[shape.index];
 
         // Calculate intersection point and normal
         float3 hit_point = ray_origin + closest_t * ray_dir;
-        float3 normal = normalize(hit_point - hit_sphere.center);
+
+        // Compute the plain sphere normal in object space.
+        // Bring it to world space with the inverse transpose of obj_to_world, then normalize it.
+        float3 obj_hit = xform_pt(shape.world_to_obj, hit_point);
+        float3 obj_normal = obj_hit - sphere.center;
+        float3 normal = normalize(xform_vec(transpose(shape.world_to_obj), obj_normal));
 
         // Get material properties
-        float3 Kd = shapes[hit_shape].Kd;
-        float3 Kr = shapes[hit_shape].Kr;
+        float3 Kd = shape.Kd;
+        float3 Kr = shape.Kr;
 
         // Calculate diffuse lighting
         float3 contribution = float3(0.0, 0.0, 0.0);
