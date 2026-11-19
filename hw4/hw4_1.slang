@@ -1,3 +1,4 @@
+
 [shader("compute")]
 [numthreads(64, 1, 1)]
 void compute_main(uint tid : SV_DispatchThreadID,
@@ -9,5 +10,19 @@ void compute_main(uint tid : SV_DispatchThreadID,
     if (tid >= num_particles) {
         return;
     }
-    // TODO: HW 4.1. Your code below.
+
+    float3 gravity = float3(0.0, -9.8, 0.0);
+    float3 velocity = velocities[tid];
+    float3 position = positions[tid];
+
+    velocity += gravity * dt;
+    position += velocity * dt;
+
+    if (position.y < -0.97) {
+        position.y = -0.97;
+        velocity.y = -velocity.y;
+    }
+
+    positions[tid] = position;
+    velocities[tid] = velocity;
 }
