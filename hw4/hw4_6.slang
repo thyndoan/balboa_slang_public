@@ -85,5 +85,44 @@ void detect_collision(uint tid : SV_DispatchThreadID,
     if (tid >= num_particles) {
         return;
     }
-    // TODO: HW 4.6. Your code below.
+
+    float3 x = positions[tid];
+
+    // The closest object so far, and its contact plane
+    float best_dist = 1e30;
+    float4 best_plane = float4(0.0, 0.0, 0.0, 0.0);
+
+    // Check all planes
+    for (uint i = 0; i < num_planes; i++) {
+        float3 n = planes[i].xyz;
+        float d = planes[i].w;
+        float dist = dot(n, x) - d;    // (+) means above the plane, (-) means below the plane
+        if (dist < best_dist) {
+            best_dist = dist;
+            best_plane = float4(n, d);
+        }
+    }
+
+    // Check all spheres
+    for (uint i = 0; i < num_spheres; i++) {
+        float3 c = spheres[i].xyz;
+        float r = spheres[i].w;
+        float3 to_x = x - c;
+        float len = length(to_x);
+        float dist = len - r;          // (+) means outside, (-) means inside
+        if (dist < best_dist && len > 1e-6) {
+            float3 n = to_x / len;     // from center toward the point
+            best_dist = dist;
+            best_plane = float4(n, dot(n, c) + r);  // flat plane touching the ball
+        }
+    }
+
+    // If it's close enough, then save the contact plane (shifted out a little)
+    // If it's too far, then save zeros, this means no contact
+    if (best_dist < contact_margin + collision_distance) {
+        best_plane.w += collision_distance;
+        contact_planes[tid] = best_plane;
+    } else {
+        contact_planes[tid] = float4(0.0, 0.0, 0.0, 0.0);
+    }
 }
