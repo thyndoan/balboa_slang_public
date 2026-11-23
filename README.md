@@ -45,14 +45,20 @@ Balboa depends on [SlangPy](https://github.com/shader-slang/slangpy) as a GPU pr
   [`scenes/hw3/hw3_7`](scenes/hw3/hw3_7)
 - Please run `uv run python main.py 3_6 scenes/hw3/hw3_7/cat_scene.json` to see the animation!
 
-# Contributions for HW3
+# Contributions for all homeworks
 
 - We used AI to help us understand the concepts visually for part 1-6.
 - We also asked it to help us with the debugging.
 - We also used AI to help us with the custom scene
 
-## details
+## details for HW3
 
 - One of our problem was our code didn’t apply xform_pt and xform_vec to every ray, so some rays weren’t transformed into object space. After the AI explained how these functions work, we fixed our code to use them correctly.
 
 - Another problem we ran into was some bugs in interpolated normal in triangle mesh, so the images were rendered wrong.
+
+## details for HW4
+
+- At first, we were confused in part 1 because the balls slowly stopped bouncing, even though our code never tells them to stop. Turned out that because we update the velocity before the position, each bounce loses a little height. The handout mentioned this, but we found it helpful to see it with step by step example from LLMs.
+
+- Another one we ran into was in part 6. When we rendered the low poly rock scene, the cloth touched the rock, but then it flew away (after around 1s) instead of staying on the rock. LLMs showed us that our algorithm compared every close triangle with the floor and spheres, so sometimes a triangle that was not the closest one was used as the contact plane, and it pushed the cloth the wrong way. We ended up fixing it by finding the closest triangle first, and then, if two triangles are at the same distance, we keep the one that shows the point is more outside.
