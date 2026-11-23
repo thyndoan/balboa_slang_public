@@ -117,6 +117,87 @@ void detect_collision(uint tid : SV_DispatchThreadID,
         }
     }
 
+    // Check the mesh using the BVH.
+    // Only look for triangles closer than this distance.
+    float max_dist = contact_margin + collision_distance;
+
+    // The closest triangle we found (as a plane)
+    bool mesh_found = false;
+    float mesh_dist = 0.0;
+    float4 mesh_plane = float4(0.0, 0.0, 0.0, 0.0);
+
+    int i = 0;
+    while (i >= 0 && i < int(num_bvh_nodes)) {
+        BVHNode node = bvh_nodes[i];
+
+        // If box is too far, then skip this whole branch
+        if (point_aabb_distance(x, node.bbox_min, node.bbox_max) > max_dist) {
+            i = node.next_index;
+            continue;
+        }
+
+        // If it's not a leaf, then go into the first child (the next node in the list)
+        if (!node.is_leaf) {
+            i = i + 1;
+            continue;
+        }
+
+        // If it's a leaf, then check its triangles
+        for (uint t = node.triangle_begin; t < node.triangle_end; t++) {
+            // The 3 corners of the triangle
+            uint3 tri = mesh_triangles[t];
+            float3 p0 = mesh_vertices[tri.x];
+            float3 p1 = mesh_vertices[tri.y];
+            float3 p2 = mesh_vertices[tri.z];
+
+            // Closest point on this triangle to the particle
+            ClosestPoint cp = closest_point_triangle(x, p0, p1, p2);
+            float unsigned_dist = length(x - cp.position);
+
+            // Farther than the closest triangle so far, then skip
+            // (1e-5 lets two triangles that share an edge count as a tie)
+            if (unsigned_dist > max_dist + 1e-5) {
+                continue;
+            }
+
+            // Face normal 
+            float3 ng = normalize(cross(p1 - p0, p2 - p0));
+
+            // Smooth normal at the closest point, from the 3 vertex normals
+            float3 ns = normalize(cp.bary.x * mesh_vertex_normals[tri.x] +
+                                  cp.bary.y * mesh_vertex_normals[tri.y] +
+                                  cp.bary.z * mesh_vertex_normals[tri.z]);
+
+            // Flip the face normal so it points outside, like the smooth normal
+            if (dot(ng, ns) < 0.0) {
+                ng = -ng;
+            }
+
+            // Treat the triangle like an infinite plane
+            float d = dot(ng, cp.position);
+            float dist = dot(ng, x) - d;   // (+) outside, (-) inside
+
+            // Keep this triangle if it's the first one, if it's closer,
+            // or if it's a tie and it says more outside
+            bool closer = unsigned_dist < max_dist - 1e-5;
+            if (!mesh_found || closer || dist > mesh_dist) {
+                mesh_found = true;
+                mesh_dist = dist;
+                mesh_plane = float4(ng, d);
+            }
+            max_dist = min(max_dist, unsigned_dist);
+        }
+
+        // Done with this leaf, go to the next branch
+        i = node.next_index;
+    }
+
+    // Now compare the closest triangle with the planes and spheres
+    if (mesh_found && mesh_dist < best_dist) {
+        best_dist = mesh_dist;
+        best_plane = mesh_plane;
+    }
+
     // If it's close enough, then save the contact plane (shifted out a little)
     // If it's too far, then save zeros, this means no contact
     if (best_dist < contact_margin + collision_distance) {
