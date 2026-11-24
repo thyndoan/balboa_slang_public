@@ -45,6 +45,14 @@ Balboa depends on [SlangPy](https://github.com/shader-slang/slangpy) as a GPU pr
   [`scenes/hw3/hw3_7`](scenes/hw3/hw3_7)
 - Please run `uv run python main.py 3_6 scenes/hw3/hw3_7/cat_scene.json` to see the animation!
 
+# HW4_7 custom scene
+
+- Location of the scene:
+  [`scenes/hw4/hw4_7`](scenes/hw4/hw4_7)
+- Please run `uv run python main.py 4_6 scenes/hw4/hw4_7/cat_rope.py` to see the animation!
+- Video: `outputs/hw_4_7.mp4`
+- Cat model was made by [Tekila](https://www.cgtrader.com/free-3d-models/animal/other/voxel-cats)
+
 # Contributions for all homeworks
 
 - We used AI to help us understand the concepts visually for part 1-6.
